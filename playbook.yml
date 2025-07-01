@@ -40,8 +40,8 @@
 
     - name: Gera senha temporária do root
       shell: grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}'
-        register: temp_mysql_pass
-        changed_when: false
+      register: temp_mysql_pass
+      changed_when: false
 
     - name: Altera senha do root
       community.mysql.mysql_user:
