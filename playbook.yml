@@ -44,7 +44,7 @@
       changed_when: false
 
     - name: Altera senha do root
-        community.mysql:
+      community.mysql:
         login_user: root
         login_password: "{{ temp_mysql_pass.stdout }}"
         user: root
