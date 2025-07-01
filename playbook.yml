@@ -51,7 +51,7 @@
         password: "{{ mysql_root_password }}"
         host_all: true
         check_implicit_admin: true
-      ignore_errors: true
+        ignore_errors: true
 
     - name: Cria database 'interview'
       community.mysql.mysql_db:
