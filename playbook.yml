@@ -40,8 +40,8 @@
 
     - name: Gera senha temporária do root
       shell: grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}'
-      register: temp_mysql_pass
-      changed_when: false
+        register: temp_mysql_pass
+        changed_when: false
 
     - name: Altera senha do root
       community.mysql.mysql_user:
@@ -75,7 +75,7 @@
         login_password: "{{ mysql_user_password }}"
         db: interview
         query: "SELECT 'Conexao OK com a base interview' AS status;"
-      register: query_output
+        register: query_output
 
     - name: Exibe resultado da consulta
       debug:
