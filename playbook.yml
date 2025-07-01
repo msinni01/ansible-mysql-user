@@ -1,0 +1,83 @@
+- name: Provisiona e configura MySQL com segurança
+  hosts: 192.168.190.133
+  become: yes
+  vars:
+    mysql_root_password: "q1w2e3r4"
+    mysql_user_name: "ansible_user"
+    mysql_user_password: "q1w2e3r4"
+
+  tasks:
+
+    - name: Instalar MySQL
+      ansible.builtin.yum:
+        name: mysql-server
+        state: present
+
+    - name: Iniciar e habilitar MySQL
+      ansible.builtin.service:
+        name: mysqld
+        state: started
+        enabled: true
+
+    - name: Configurar SELinux para permitir conexões MySQL
+      ansible.posix.seboolean:
+        name: mysql_connect_any
+        state: true
+        persistent: yes
+
+    - name: Abrir porta 3306 no firewalld
+      ansible.posix.firewalld:
+        port: 3306/tcp
+        permanent: yes
+        state: enabled
+        immediate: yes
+
+    - name: Garantir que firewalld está ativo
+      ansible.builtin.service:
+        name: firewalld
+        state: started
+        enabled: true
+
+    - name: Gera senha temporária do root
+      shell: grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}'
+      register: temp_mysql_pass
+      changed_when: false
+
+    - name: Altera senha do root
+      community.mysql.mysql_user:
+        login_user: root
+        login_password: "{{ temp_mysql_pass.stdout }}"
+        user: root
+        password: "{{ mysql_root_password }}"
+        host_all: true
+        check_implicit_admin: true
+      ignore_errors: true
+
+    - name: Cria database 'interview'
+      community.mysql.mysql_db:
+        name: interview
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Cria usuário de banco de dados
+      community.mysql.mysql_user:
+        name: "{{ mysql_user_name }}"
+        password: "{{ mysql_user_password }}"
+        priv: 'interview.*:ALL'
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Realiza uma consulta simples para verificar a base
+      community.mysql.mysql_query:
+        login_user: "{{ mysql_user_name }}"
+        login_password: "{{ mysql_user_password }}"
+        db: interview
+        query: "SELECT 'Conexao OK com a base interview' AS status;"
+      register: query_output
+
+    - name: Exibe resultado da consulta
+      debug:
+        msg: "{{ query_output.query_result[0].status }}"
+
